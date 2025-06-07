@@ -1,7 +1,6 @@
 # Universal 2D to 3D Object Converter - Enhanced
 # ===================================================
 # Converts any 2D object image to a 3D model with original colors
-# Optimized for all object types, not just apples
 # ===================================================
 
 from __future__ import annotations
@@ -213,18 +212,9 @@ class ColorPreserver:
     @staticmethod
     def create_color_mapping(rgb: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """Creates optimized color mapping for 3D display"""
-        colors = rgb.copy().astype(np.float32)
-        
-        # Normalize colors for better 3D visualization
-        colors = colors / 255.0
-        
-        # Apply gamma correction for better appearance in 3D viewers
-        colors = np.power(colors, 0.9)
-        
-        # Ensure colors stay in valid range
-        colors = np.clip(colors, 0, 1)
-        
-        return (colors * 255).astype(np.uint8)
+        # פשוט נשמור את הצבעים המקוריים!
+        colors = rgb.copy().astype(np.uint8)
+        return colors    
 
 # =============================================================
 #                    Universal Depth Map Functions
@@ -496,49 +486,24 @@ class Universal3DConverter:
         # Scale Z dimension
         vertices[:, 2] *= self.config["scale_z"]
         
+        print(f"🎨 Color sample: {colors[:5]}")  # בדיקה
+        
         # Triangulation
         try:
             tri = Delaunay(vertices[:, :2])
             
-            # Create mesh with colors
+            # יצירת mesh עם צבעים באופן מפורש
             mesh = trimesh.Trimesh(
                 vertices=vertices,
                 faces=tri.simplices,
-                vertex_colors=colors,
                 process=False
             )
             
-            # Smooth mesh
-            mesh = mesh.smoothed()
+            # הוספת צבעים באופן מפורש
+            mesh.visual.vertex_colors = np.column_stack([colors, np.full(len(colors), 255)])  # הוספת alpha
             
-            # Validation
-            print(f"📊 Mesh statistics:")
-            print(f"   Vertices: {len(vertices)}")
-            print(f"   Faces: {len(tri.simplices)}")
-            print(f"   Watertight: {mesh.is_watertight}")
-            
-            # Save PLY with colors
+            print(f"✅ PLY saved with {len(colors)} vertex colors")
             mesh.export(self.file_manager.ply_path)
-            print(f"✅ PLY saved (with colors): {self.file_manager.ply_path}")
-            
-            # Save STL for printing
-            try:
-                # Create a clean STL version (no colors)
-                stl_mesh = trimesh.Trimesh(
-                    vertices=mesh.vertices,
-                    faces=mesh.faces,
-                    process=False
-                )
-                stl_mesh.export(self.file_manager.stl_path)
-                            
-                # Verify STL file was created
-                if Path(self.file_manager.stl_path).exists():
-                    print(f"✅ STL saved (for printing): {self.file_manager.stl_path}")
-                else:
-                    print(f"⚠️ STL file creation failed")
-                    
-            except Exception as stl_error:
-                print(f"⚠️ STL export warning: {stl_error}")
             
         except Exception as e:
             print(f"❌ Error creating mesh: {e}")
@@ -619,9 +584,10 @@ def batch_convert(input_directory: str, object_type: str = "auto") -> None:
 #                    Main Execution
 # =============================================================
 
+
 if __name__ == "__main__":
     # Example usage
-    input_image = r"C:\Users\Student6\Desktop\Depthify\picture\before\buba.jpg"  # Change this to your image path
+    input_image = r"C:\Users\Student6\Desktop\תכנות שנה ב\פרויקט\מהפרויקט עצמו\picture\before\ששש.jpg"  # Change this to your image path
     
     # Convert single image (auto-detect object type)
     convert_image_to_3d(input_image, "auto")
@@ -634,3 +600,4 @@ if __name__ == "__main__":
     
     # Batch convert directory:
     # batch_convert("input_images/", "auto")
+    

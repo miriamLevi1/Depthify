@@ -13,7 +13,7 @@ from datetime import datetime
 import uuid
 from pathlib import Path
 
-# Import your 3D conversion algorithm
+# Import 3D conversion algorithm
 from algorithms.universal_converter import Universal3DConverter
 from algorithms.model_analyzer import ModelAnalyzer
 
